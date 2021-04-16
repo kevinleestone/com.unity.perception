@@ -198,6 +198,7 @@ namespace UnityEngine.Perception.GroundTruth
 
             SetupInstanceSegmentation();
             attachedCamera = GetComponent<Camera>();
+            attachedCamera.depthTextureMode = attachedCamera.depthTextureMode | DepthTextureMode.Depth;
 
             SetupVisualizationCamera();
 
@@ -433,14 +434,29 @@ namespace UnityEngine.Perception.GroundTruth
             SetPersistentSensorData("camera_intrinsic", ToProjectionMatrix3x3(cam.projectionMatrix));
 
             var captureFilename = $"{Manager.Instance.GetDirectoryFor(rgbDirectory)}/{k_RgbFilePrefix}{Time.frameCount}.png";
+            var depthFilename = $"{Manager.Instance.GetDirectoryFor(rgbDirectory)}/{k_RgbFilePrefix}{Time.frameCount}_depth.raw";
             var dxRootPath = $"{rgbDirectory}/{k_RgbFilePrefix}{Time.frameCount}.png";
             SensorHandle.ReportCapture(dxRootPath, SensorSpatialData.FromGameObjects(
                 m_EgoMarker == null ? null : m_EgoMarker.gameObject, gameObject),
                 m_PersistentSensorData.Select(kvp => (kvp.Key, kvp.Value)).ToArray());
 
             Func<AsyncRequest<CaptureCamera.CaptureState>, AsyncRequest.Result> colorFunctor;
+            Func<AsyncRequest<CaptureCamera.CaptureState>, AsyncRequest.Result> depthFunctor;
             var width = cam.pixelWidth;
             var height = cam.pixelHeight;
+            var nearClipPlane = cam.nearClipPlane;
+            var farClipPlane = cam.farClipPlane;
+
+            depthFunctor = r =>
+            {
+                using (s_WriteFrame.Auto())
+                {
+                    var dataDepthBuffer = (byte[])r.data.depthBuffer;
+                    return !FileProducer.Write(depthFilename, dataDepthBuffer)
+                        ? AsyncRequest.Result.Error
+                        : AsyncRequest.Result.Completed;
+                }
+            };
 
             colorFunctor = r =>
             {
@@ -461,11 +477,7 @@ namespace UnityEngine.Perception.GroundTruth
                 }
             };
 
-#if SIMULATION_CAPTURE_0_0_10_PREVIEW_16_OR_NEWER
-            CaptureCamera.Capture(cam, colorFunctor, forceFlip: ForceFlip.None);
-#else
-            CaptureCamera.Capture(cam, colorFunctor, flipY: flipY);
-#endif
+            CaptureCamera.Capture(cam, colorFunctor: colorFunctor, depthFunctor: depthFunctor, depthFormat: GraphicsFormat.R16_UNorm, forceFlip: ForceFlip.None);
             Profiler.EndSample();
         }
 
