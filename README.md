@@ -1,3 +1,17 @@
+# CUSTOM DEPTH PATCH
+
+Raw depth images will be saved along side with the RGB images. The depth images are raw float32 buffers. The included
+script can convert them into a standard 16-bit 1 channel millimeter depth image.
+
+This only works in HDRP mode at the moment. URP renders blank depth images for some unknown reason.
+
+```
+> python convert_raw_depth.py example_rgb.png
+```
+
+
+# Upstream
+
 <img src="com.unity.perception/Documentation~/images/unity-wide.png" align="middle" width="3000"/>
 
 <img src="com.unity.perception/Documentation~/images/banner2.PNG" align="middle"/>

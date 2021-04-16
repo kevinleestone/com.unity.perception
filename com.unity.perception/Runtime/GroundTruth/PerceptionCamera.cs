@@ -477,7 +477,8 @@ namespace UnityEngine.Perception.GroundTruth
                 }
             };
 
-            CaptureCamera.Capture(cam, colorFunctor: colorFunctor, depthFunctor: depthFunctor, depthFormat: GraphicsFormat.R16_UNorm, forceFlip: ForceFlip.None);
+            //CaptureCamera.Capture(cam, colorFunctor: colorFunctor, depthFunctor: depthFunctor, depthFormat: GraphicsFormat.R16_UNorm, forceFlip: ForceFlip.None);
+            CaptureCamera.Capture(cam, colorFunctor: colorFunctor, depthFunctor: depthFunctor, depthFormat: GraphicsFormat.R32_SFloat, forceFlip: ForceFlip.None);
             Profiler.EndSample();
         }
 
